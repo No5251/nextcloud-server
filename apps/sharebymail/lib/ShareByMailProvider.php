@@ -52,6 +52,7 @@ use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\HintException;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\ILogger;
@@ -74,6 +75,9 @@ use OCP\Share\IShareProvider;
  * @package OCA\ShareByMail
  */
 class ShareByMailProvider implements IShareProvider {
+
+	/** @var IConfig */
+	private $config;
 
 	/** @var  IDBConnection */
 	private $dbConnection;
@@ -126,7 +130,8 @@ class ShareByMailProvider implements IShareProvider {
 		return 'ocMailShare';
 	}
 
-	public function __construct(IDBConnection $connection,
+	public function __construct(IConfig $config,
+								IDBConnection $connection,
 								ISecureRandom $secureRandom,
 								IUserManager $userManager,
 								IRootFolder $rootFolder,
@@ -140,6 +145,7 @@ class ShareByMailProvider implements IShareProvider {
 								IHasher $hasher,
 								IEventDispatcher $eventDispatcher,
 								IShareManager $shareManager) {
+		$this->config = $config;
 		$this->dbConnection = $connection;
 		$this->secureRandom = $secureRandom;
 		$this->userManager = $userManager;
@@ -190,9 +196,13 @@ class ShareByMailProvider implements IShareProvider {
 		}
 
 		$shareId = $this->createMailShare($share);
-		$send = $this->sendPassword($share, $password);
-		if ($passwordEnforced && $send === false) {
-			$this->sendPasswordToOwner($share, $password);
+
+		// Sends share password when it's a permanent one (otherwise guest will have to request it via the showShare UI)
+		if ($this->config->getSystemValue('allow_mail_share_permanent_password')) {
+			$send = $this->sendPassword($share, $password);
+			if ($passwordEnforced && $send === false) {
+				$this->sendPasswordToOwner($share, $password);
+			}
 		}
 
 		$this->createShareActivity($share);
@@ -327,6 +337,7 @@ class ShareByMailProvider implements IShareProvider {
 			$share->getPermissions(),
 			$share->getToken(),
 			$share->getPassword(),
+			$share->getPasswordExpirationTime(),
 			$share->getSendPasswordByTalk(),
 			$share->getHideDownload(),
 			$share->getLabel(),
@@ -689,7 +700,7 @@ class ShareByMailProvider implements IShareProvider {
 	 * @param \DateTime|null $expirationTime
 	 * @return int
 	 */
-	protected function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $password, $sendPasswordByTalk, $hideDownload, $label, $expirationTime, $note = ''): int {
+	protected function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $password, $passwordExpirationTime, $sendPasswordByTalk, $hideDownload, $label, $expirationTime, $note = ''): int {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share')
 			->setValue('share_type', $qb->createNamedParameter(IShare::TYPE_EMAIL))
@@ -702,6 +713,7 @@ class ShareByMailProvider implements IShareProvider {
 			->setValue('permissions', $qb->createNamedParameter($permissions))
 			->setValue('token', $qb->createNamedParameter($token))
 			->setValue('password', $qb->createNamedParameter($password))
+			->setValue('password_expiration_time', $qb->createNamedParameter($passwordExpirationTime, IQueryBuilder::PARAM_DATE))
 			->setValue('password_by_talk', $qb->createNamedParameter($sendPasswordByTalk, IQueryBuilder::PARAM_BOOL))
 			->setValue('stime', $qb->createNamedParameter(time()))
 			->setValue('hide_download', $qb->createNamedParameter((int)$hideDownload, IQueryBuilder::PARAM_INT))
@@ -739,6 +751,7 @@ class ShareByMailProvider implements IShareProvider {
 								($originalShare->getSendPasswordByTalk() && !$share->getSendPasswordByTalk()))) {
 			$this->sendPassword($share, $plainTextPassword);
 		}
+
 		/*
 		 * We allow updating the permissions and password of mail shares
 		 */
@@ -749,6 +762,7 @@ class ShareByMailProvider implements IShareProvider {
 			->set('uid_owner', $qb->createNamedParameter($share->getShareOwner()))
 			->set('uid_initiator', $qb->createNamedParameter($share->getSharedBy()))
 			->set('password', $qb->createNamedParameter($share->getPassword()))
+			->set('password_expiration_time', $qb->createNamedParameter($share->getPasswordExpirationTime(), IQueryBuilder::PARAM_DATE))
 			->set('label', $qb->createNamedParameter($share->getLabel()))
 			->set('password_by_talk', $qb->createNamedParameter($share->getSendPasswordByTalk(), IQueryBuilder::PARAM_BOOL))
 			->set('expiration', $qb->createNamedParameter($share->getExpirationDate(), IQueryBuilder::PARAM_DATE))
@@ -1012,6 +1026,7 @@ class ShareByMailProvider implements IShareProvider {
 		$share->setShareTime($shareTime);
 		$share->setSharedWith($data['share_with']);
 		$share->setPassword($data['password']);
+		$share->setPasswordExpirationTime($data['password_expiration_time']);
 		$share->setLabel($data['label']);
 		$share->setSendPasswordByTalk((bool)$data['password_by_talk']);
 		$share->setHideDownload((bool)$data['hide_download']);

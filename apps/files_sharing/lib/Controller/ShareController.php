@@ -72,6 +72,7 @@ use OCP\ISession;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
+use OCP\Security\ISecureRandom;
 use OCP\Share;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager as ShareManager;
@@ -109,6 +110,8 @@ class ShareController extends AuthPublicShareController {
 	protected $defaults;
 	/** @var ShareManager */
 	protected $shareManager;
+	/** @var ISecureRandom */
+	protected $secureRandom;
 
 	/** @var Share\IShare */
 	protected $share;
@@ -129,6 +132,7 @@ class ShareController extends AuthPublicShareController {
 	 * @param IAccountManager $accountManager
 	 * @param IEventDispatcher $eventDispatcher
 	 * @param IL10N $l10n
+	 * @param ISecureRandom $secureRandom
 	 * @param Defaults $defaults
 	 */
 	public function __construct(string $appName,
@@ -146,6 +150,7 @@ class ShareController extends AuthPublicShareController {
 								IAccountManager $accountManager,
 								IEventDispatcher $eventDispatcher,
 								IL10N $l10n,
+								ISecureRandom $secureRandom,
 								Defaults $defaults) {
 		parent::__construct($appName, $request, $session, $urlGenerator);
 
@@ -159,6 +164,7 @@ class ShareController extends AuthPublicShareController {
 		$this->accountManager = $accountManager;
 		$this->eventDispatcher = $eventDispatcher;
 		$this->l10n = $l10n;
+		$this->secureRandom = $secureRandom;
 		$this->defaults = $defaults;
 		$this->shareManager = $shareManager;
 	}
@@ -207,6 +213,62 @@ class ShareController extends AuthPublicShareController {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * The template to show after user identification
+	 */
+	protected function showIdentificationResult(bool $success = false): TemplateResponse {
+		$templateParameters = ['share' => $this->share, 'identityOk' => $success];
+
+		$this->eventDispatcher->dispatchTyped(new BeforeTemplateRenderedEvent($this->share, BeforeTemplateRenderedEvent::SCOPE_PUBLIC_SHARE_AUTH));
+
+		$response = new TemplateResponse('core', 'publicshareauth', $templateParameters, 'guest');
+		if ($this->share->getSendPasswordByTalk()) {
+			$csp = new ContentSecurityPolicy();
+			$csp->addAllowedConnectDomain('*');
+			$csp->addAllowedMediaDomain('blob:');
+			$response->setContentSecurityPolicy($csp);
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Validate the identity token of a public share
+	 *
+	 * @param string $identityToken
+	 * @return bool
+	 */
+	protected function validateIdentity(string $identityToken = null): bool {
+
+		if ($this->share->getShareType() !== IShare::TYPE_EMAIL) {
+			return false;
+		}
+
+		if ($identityToken === null || $this->share->getSharedWith() === null) {
+			return false;
+		}
+
+		if ($identityToken !== $this->share->getSharedWith()) {
+			return false;
+		}
+
+		return true;
+
+	}
+
+	/**
+	 * Generates a password for the share, respecting any password policy defined
+	 */
+	protected function generatePassword() {
+		$event = new \OCP\Security\Events\GenerateSecurePasswordEvent();
+		$this->eventDispatcher->dispatchTyped($event);
+		$password = $event->getPassword() ?? $this->secureRandom->generate(20);
+
+		$this->share->setPassword($password);
+		$this->shareManager->updateShare($this->share);
+		return;
 	}
 
 	protected function verifyPassword(string $password): bool {
