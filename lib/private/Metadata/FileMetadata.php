@@ -11,31 +11,28 @@ use JsonSerializable;
  * @method string getGroupName()
  * @method void setGroupName(string $groupName)
  */
-class FileMetadata extends Entity implements JsonSerializable {
+class FileMetadata extends Entity {
 	protected int $fileId;
 	protected string $groupName;
 	protected string $data;
 	private array $metadata;
 
 	public function __construct() {
-		$this->addType('fileId', 'integer');
 		$this->addType('groupName', 'string');
 		$this->addType('data', 'string');
 	}
 
-	#[\ReturnTypeWillChange]
-	public function jsonSerialize() {
-		return [
-			'file_id' => $this->fileId,
-			'group_name' => $this->groupName,
-			'data' => json_encode($this->data),
-		];
+	public function columnToProperty($column) {
+		if ($column === 'id') {
+			return 'fileId';
+		} else {
+			return parent::columnToProperty($column);
+		}
 	}
 
 	public function propertyToColumn($property) {
-		// Make sure that getId returns the fileid of the metadata
-		if ($property === 'id') {
-			return 'fileid';
+		if ($property === 'fileId') {
+			return 'id';
 		} else {
 			return parent::propertyToColumn($property);
 		}
