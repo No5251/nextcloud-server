@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace OC\Metadata;
 
@@ -9,17 +9,13 @@ use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
-/**
- * @psalm-type FileId = int
- */
-
 class FileMetadataMapper extends QBMapper {
 	public function __construct(IDBConnection $db) {
 		parent::__construct($db, 'file_metadata', FileMetadata::class);
 	}
 
 	/**
-	 * @return MetadataGroup[]
+	 * @return FileMetadata[]
 	 * @throws Exception
 	 */
 	public function findForFile(int $fileId): array {
@@ -36,27 +32,44 @@ class FileMetadataMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-	public function findForGroupForFile(int $fileId, string $groupName): MetadataGroup {
+	public function findForGroupForFile(int $fileId, string $groupName): FileMetadata {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT_ARRAY)))
 			->andWhere($qb->expr()->eq('group_name', $qb->createNamedParameter($groupName, IQueryBuilder::PARAM_STR)));
 
 		return $this->findEntity($qb);
 	}
 
 	/**
-	 * @return array<FileId, MetadataGroup>
+	 * @return array<int, FileMetadata>
 	 * @throws Exception
 	 */
 	public function findForGroupForFiles(array $fileIds, string $groupName): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->in('id', $qb->createNamedParameter($fileIds,IQueryBuilder::PARAM_INT)));
+			->where($qb->expr()->in('id', $qb->createNamedParameter($fileIds,IQueryBuilder::PARAM_INT_ARRAY)))
+			->andWhere($qb->expr()->eq('group_name', $qb->createNamedParameter($groupName, IQueryBuilder::PARAM_STR)));
 
-		return $this->findEntities($qb);
+		/** @var FileMetadata[] $rawEntities */
+		$rawEntities = $this->findEntities($qb);
+		$metadata = [];
+		foreach ($rawEntities as $entity) {
+			$metadata[$entity->getId()] = $entity;
+		}
+		foreach ($fileIds as $id) {
+			if (isset($metadata[$id])) {
+				continue;
+			}
+			$empty = new FileMetadata();
+			$empty->setMetadata([]);
+			$empty->setGroupName($groupName);
+			$empty->setId($id);
+			$metadata[$id] = $empty;
+		}
+		return $metadata;
 	}
 
 	public function clear(int $fileId): void {
