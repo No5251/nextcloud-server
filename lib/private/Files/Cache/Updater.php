@@ -28,48 +28,30 @@
 namespace OC\Files\Cache;
 
 use OC\Files\FileInfo;
+use OC\Metadata\IMetadataManager;
 use OCP\Files\Cache\ICacheEntry;
 use OCP\Files\Cache\IUpdater;
 use OCP\Files\Storage\IStorage;
+use Sabre\DAV\Xml\Element\Prop;
 
 /**
  * Update the cache and propagate changes
  *
  */
 class Updater implements IUpdater {
-	/**
-	 * @var bool
-	 */
-	protected $enabled = true;
+	protected bool $enabled = true;
+	protected \OC\Files\Storage\Storage $storage;
+	protected Propagator $propagator;
+	protected Scanner $scanner;
+	protected Cache $cache;
+	protected IMetadataManager $metadataManager;
 
-	/**
-	 * @var \OC\Files\Storage\Storage
-	 */
-	protected $storage;
-
-	/**
-	 * @var \OC\Files\Cache\Propagator
-	 */
-	protected $propagator;
-
-	/**
-	 * @var Scanner
-	 */
-	protected $scanner;
-
-	/**
-	 * @var Cache
-	 */
-	protected $cache;
-
-	/**
-	 * @param \OC\Files\Storage\Storage $storage
-	 */
 	public function __construct(\OC\Files\Storage\Storage $storage) {
 		$this->storage = $storage;
 		$this->propagator = $storage->getPropagator();
 		$this->scanner = $storage->getScanner();
 		$this->cache = $storage->getCache();
+		$this->metadataManager = \OC::$server->get(IMetadataManager::class);
 	}
 
 	/**
@@ -155,6 +137,9 @@ class Updater implements IUpdater {
 		}
 
 		$entry = $this->cache->get($path);
+		if ($entry) {
+			$this->metadataManager->clearMetadata($entry->getId());
+		}
 
 		$this->cache->remove($path);
 

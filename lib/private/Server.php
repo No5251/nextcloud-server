@@ -121,6 +121,10 @@ use OC\Log\PsrLoggerAdapter;
 use OC\Mail\Mailer;
 use OC\Memcache\ArrayCache;
 use OC\Memcache\Factory;
+use OC\Metadata\FileEventListener;
+use OC\Metadata\IMetadataManager;
+use OC\Metadata\IMetadataProvider;
+use OC\Metadata\MetaDataManager;
 use OC\Notification\Manager;
 use OC\OCS\DiscoveryService;
 use OC\Preview\GeneratorHelper;
@@ -1426,6 +1430,8 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerAlias(\OCP\UserStatus\IManager::class, \OC\UserStatus\Manager::class);
 
 		$this->registerAlias(IBroker::class, Broker::class);
+
+		$this->registerAlias(IMetadataManager::class, MetaDataManager::class);
 
 		$this->connectDispatcher();
 	}
