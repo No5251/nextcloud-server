@@ -26,7 +26,7 @@ class FileMetadataMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('file_id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)));
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)));
 
 		return $this->findEntities($qb);
 	}
@@ -40,7 +40,7 @@ class FileMetadataMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('file_id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)))
 			->andWhere($qb->expr()->eq('group_name', $qb->createNamedParameter($groupName, IQueryBuilder::PARAM_STR)));
 
 		return $this->findEntity($qb);
@@ -54,8 +54,17 @@ class FileMetadataMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->in('file_id', $qb->createNamedParameter($fileIds, )));
+			->where($qb->expr()->in('id', $qb->createNamedParameter($fileIds,IQueryBuilder::PARAM_INT)));
 
 		return $this->findEntities($qb);
+	}
+
+	public function clear(int $fileId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete()
+			->from($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)));
+
+		$qb->executeStatement();
 	}
 }

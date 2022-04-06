@@ -3,6 +3,7 @@
 namespace OC\Metadata;
 
 use OCP\Files\File;
+use OCP\Files\Storage\IStorage;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 

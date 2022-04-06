@@ -2,7 +2,9 @@
 
 namespace OC\Metadata;
 
+use OC\Metadata\Provider\ExifProvider;
 use OCP\Files\File;
+use OCP\Files\Storage\IStorage;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
@@ -24,6 +26,9 @@ class MetaDataManager implements IMetadataManager {
 		$this->fileMetadataMapper = $fileMetadataMapper;
 		$this->config = $config;
 		$this->logger = $logger;
+
+		// TODO move to another place, where?
+		$this->registerProvider(ExifProvider::class);
 	}
 
 	/**
@@ -35,25 +40,30 @@ class MetaDataManager implements IMetadataManager {
 		}
 
 		if (call_user_func([$className, 'isAvailable'])) {
-			$this->providers[call_user_func([$className, 'supportedMimetypes'])]
+			$this->providers[call_user_func([$className, 'getMimetypesSupported'])]
 				= new $className($this->config, $this->logger);
 		}
 	}
 
 	public function generateMetadata(File $file, array $existingMetadataGroups = []): void {
-		$mimeType = $file->getMimeType();
 		foreach ($this->providers as $supportedMimetype => $provider) {
-			if (preg_match($supportedMimetype, $mimeType)) {
-				if (count(array_intersect($existingMetadataGroups, $provider::groupsProvided())) > 0) {
+			if (preg_match($supportedMimetype, $file->getMimeType())) {
+				if (count(array_diff($provider::groupsProvided(), $existingMetadataGroups)) > 0) {
 					$metaDataGroup = $provider->execute($file);
 					foreach ($metaDataGroup as $group => $metadata) {
+						/** @var MetadataGroup $metadata */
 						$fileMetadata = new FileMetadata();
-						$fileMetadata->setFileId($file->getId());
+						$fileMetadata->setId($file->getId());
 						$fileMetadata->setGroupName($group);
-						$fileMetadata->setMetadata();
+						$fileMetadata->setMetadata($metadata->getMetadata());
+						$this->fileMetadataMapper->insertOrUpdate($fileMetadata);
 					}
 				}
 			}
 		}
+	}
+
+	public function clearMetadata(int $fileId): void {
+		$this->fileMetadataMapper->clear($fileId);
 	}
 }

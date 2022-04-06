@@ -48,8 +48,13 @@ use OC\DB\MissingColumnInformation;
 use OC\DB\MissingIndexInformation;
 use OC\DB\MissingPrimaryKeyInformation;
 use OC\DB\SchemaWrapper;
+use OC\Metadata\FileEventListener;
 use OCP\AppFramework\App;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\Files\Events\Node\NodeCreatedEvent;
+use OCP\Files\Events\Node\NodeDeletedEvent;
+use OCP\Files\Events\Node\NodeTouchedEvent;
+use OCP\Files\Events\Node\NodeWrittenEvent;
 use OCP\IDBConnection;
 use OCP\User\Events\BeforeUserDeletedEvent;
 use OCP\User\Events\UserDeletedEvent;
@@ -301,5 +306,10 @@ class Application extends App {
 		$eventDispatcher->addServiceListener(BeforeUserDeletedEvent::class, UserDeletedFilesCleanupListener::class);
 		$eventDispatcher->addServiceListener(UserDeletedEvent::class, UserDeletedFilesCleanupListener::class);
 		$eventDispatcher->addServiceListener(UserDeletedEvent::class, UserDeletedWebAuthnCleanupListener::class);
+
+		$eventDispatcher = \OC::$server->get(IEventDispatcher::class);
+		$eventDispatcher->addServiceListener(NodeDeletedEvent::class, FileEventListener::class);
+		$eventDispatcher->addServiceListener(NodeWrittenEvent::class, FileEventListener::class);
+		$eventDispatcher->addServiceListener(NodeCreatedEvent::class, FileEventListener::class);
 	}
 }

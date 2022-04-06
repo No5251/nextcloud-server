@@ -2,7 +2,7 @@
 
 namespace OC\Metadata;
 
-final class MetadataGroup extends \JsonSerializable {
+final class MetadataGroup implements \JsonSerializable {
 	private string $name;
 	/** @var array<string, mixed> */
 	private array $metadata;

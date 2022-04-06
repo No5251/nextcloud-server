@@ -26,7 +26,7 @@ class Version240000Date20220404230027 extends SimpleMigrationStep {
 
 		if (!$schema->hasTable('file_metadata')) {
 			$table = $schema->createTable('file_metadata');
-			$table->addColumn('file_id', 'integer', [
+			$table->addColumn('id', 'integer', [
 				'notnull' => true,
 			]);
 			$table->addColumn('group_name', 'string', [
@@ -37,7 +37,7 @@ class Version240000Date20220404230027 extends SimpleMigrationStep {
 				'notnull' => true,
 				'length' => 2000,
 			]);
-			$table->setPrimaryKey(['file_id', 'group_name'], 'file_metadata_idx');
+			$table->setPrimaryKey(['id', 'group_name'], 'file_metadata_idx');
 		}
 		return $schema;
 	}

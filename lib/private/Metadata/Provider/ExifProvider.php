@@ -5,6 +5,7 @@ namespace OC\Metadata\Provider;
 use OC\Metadata\IMetadataProvider;
 use OC\Metadata\MetadataGroup;
 use OCP\Files\File;
+use OCP\Files\Storage\IStorage;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
@@ -56,9 +57,9 @@ class ExifProvider implements IMetadataProvider {
 			];
 		}
 
-		if (in_array('COMPUTED', $data)
-			&& in_array('Width', $data['COMPUTED'])
-			&& in_array('Height', $data['COMPUTED'])
+		if (array_key_exists('COMPUTED', $data)
+			&& array_key_exists('Width', $data['COMPUTED'])
+			&& array_key_exists('Height', $data['COMPUTED'])
 		) {
 			$size = new MetadataGroup('size', [
 				'width' => $data['COMPUTED']['Width'],
@@ -68,7 +69,7 @@ class ExifProvider implements IMetadataProvider {
 			$size = new MetadataGroup('size', []);
 		}
 
-		if (in_array('GPS', $data)) {
+		if (array_key_exists('GPS', $data)) {
 			$gps = new MetadataGroup('gps', [
 				'longitude' => $this->getGps($data['GPS']['GPSLongitude'],
 					$data['GPS']['GPSLongitudeRef']),

@@ -6,36 +6,17 @@ use OCP\AppFramework\Db\Entity;
 use JsonSerializable;
 
 /**
- * @method int getFileId()
- * @method void setFileId(int $fileId)
  * @method string getGroupName()
  * @method void setGroupName(string $groupName)
  */
 class FileMetadata extends Entity {
-	protected int $fileId;
-	protected string $groupName;
-	protected string $data;
-	private array $metadata;
+	protected ?string $groupName = null;
+	protected ?string $data = null;
+	private ?array $metadata = null;
 
 	public function __construct() {
 		$this->addType('groupName', 'string');
 		$this->addType('data', 'string');
-	}
-
-	public function columnToProperty($column) {
-		if ($column === 'id') {
-			return 'fileId';
-		} else {
-			return parent::columnToProperty($column);
-		}
-	}
-
-	public function propertyToColumn($property) {
-		if ($property === 'fileId') {
-			return 'id';
-		} else {
-			return parent::propertyToColumn($property);
-		}
 	}
 
 	public function getMetadata(): array {
