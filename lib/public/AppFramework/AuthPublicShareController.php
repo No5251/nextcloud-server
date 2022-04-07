@@ -98,21 +98,26 @@ abstract class AuthPublicShareController extends PublicShareController {
 	 *
 	 * @since 24.0.0
 	 */
-	abstract protected function validateIdentity(string $identityToken): bool;
+	protected function validateIdentity(?string $identityToken = null): bool {
+		return false;
+	};
 
 	/**
 	 * Generates a password
 	 *
-	 * @since 14.0.0
+	 * @since 24.0.0
 	 */
-	abstract protected function generatePassword();
+	protected function generatePassword(): void {
+	};
 
 	/**
 	 * Verify the password
 	 *
-	 * @since 14.0.0
+	 * @since 24.0.0
 	 */
-	abstract protected function verifyPassword(string $password): bool;
+	protected function verifyPassword(string $password): bool {
+		return false;
+	}
 
 	/**
 	 * Function called after failed authentication

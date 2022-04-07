@@ -476,6 +476,7 @@ class ShareByMailProviderTest extends TestCase {
 		$hideDownload = true;
 		$label = 'label';
 		$expiration = new \DateTime();
+		$passwordExpirationTime = new \DateTime();
 
 
 		$instance = $this->getInstance();
@@ -491,7 +492,7 @@ class ShareByMailProviderTest extends TestCase {
 				$permissions,
 				$token,
 				$password,
-				null,
+				$passwordExpirationTime,
 				$sendPasswordByTalk,
 				$hideDownload,
 				$label,
@@ -518,6 +519,7 @@ class ShareByMailProviderTest extends TestCase {
 		$this->assertSame($permissions, (int)$result[0]['permissions']);
 		$this->assertSame($token, $result[0]['token']);
 		$this->assertSame($password, $result[0]['password']);
+		$this->assertSame($passwordExpirationTime->getTimestamp(), \DateTime::createFromFormat('Y-m-d H:i:s', $result[0]['password_expiration_time'])->getTimestamp());
 		$this->assertSame($sendPasswordByTalk, (bool)$result[0]['password_by_talk']);
 		$this->assertSame($hideDownload, (bool)$result[0]['hide_download']);
 		$this->assertSame($label, $result[0]['label']);

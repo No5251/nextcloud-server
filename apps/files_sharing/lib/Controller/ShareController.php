@@ -85,56 +85,21 @@ use OCP\Template;
  * @package OCA\Files_Sharing\Controllers
  */
 class ShareController extends AuthPublicShareController {
+	protected IConfig $config;
+	protected IUserManager $userManager;
+	protected ILogger $logger;
+	protected \OCP\Activity\IManager $activityManager;
+	protected IPreview $previewManager;
+	protected IRootFolder $rootFolder;
+	protected FederatedShareProvider $federatedShareProvider;
+	protected IAccountManager $accountManager;
+	protected IEventDispatcher $eventDispatcher;
+	protected IL10N $l10n;
+	protected Defaults $defaults;
+	protected ShareManager $shareManager;
+	protected ISecureRandom $secureRandom;
+	protected ?Share\IShare $share = null;
 
-	/** @var IConfig */
-	protected $config;
-	/** @var IUserManager */
-	protected $userManager;
-	/** @var ILogger */
-	protected $logger;
-	/** @var \OCP\Activity\IManager */
-	protected $activityManager;
-	/** @var IPreview */
-	protected $previewManager;
-	/** @var IRootFolder */
-	protected $rootFolder;
-	/** @var FederatedShareProvider */
-	protected $federatedShareProvider;
-	/** @var IAccountManager */
-	protected $accountManager;
-	/** @var IEventDispatcher */
-	protected $eventDispatcher;
-	/** @var IL10N */
-	protected $l10n;
-	/** @var Defaults */
-	protected $defaults;
-	/** @var ShareManager */
-	protected $shareManager;
-	/** @var ISecureRandom */
-	protected $secureRandom;
-
-	/** @var Share\IShare */
-	protected $share;
-
-	/**
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IConfig $config
-	 * @param IURLGenerator $urlGenerator
-	 * @param IUserManager $userManager
-	 * @param ILogger $logger
-	 * @param \OCP\Activity\IManager $activityManager
-	 * @param \OCP\Share\IManager $shareManager
-	 * @param ISession $session
-	 * @param IPreview $previewManager
-	 * @param IRootFolder $rootFolder
-	 * @param FederatedShareProvider $federatedShareProvider
-	 * @param IAccountManager $accountManager
-	 * @param IEventDispatcher $eventDispatcher
-	 * @param IL10N $l10n
-	 * @param ISecureRandom $secureRandom
-	 * @param Defaults $defaults
-	 */
 	public function __construct(string $appName,
 								IRequest $request,
 								IConfig $config,
@@ -237,10 +202,10 @@ class ShareController extends AuthPublicShareController {
 	/**
 	 * Validate the identity token of a public share
 	 *
-	 * @param string $identityToken
+	 * @param ?string $identityToken
 	 * @return bool
 	 */
-	protected function validateIdentity(string $identityToken = null): bool {
+	protected function validateIdentity(?string $identityToken = null): bool {
 
 		if ($this->share->getShareType() !== IShare::TYPE_EMAIL) {
 			return false;
@@ -250,25 +215,19 @@ class ShareController extends AuthPublicShareController {
 			return false;
 		}
 
-		if ($identityToken !== $this->share->getSharedWith()) {
-			return false;
-		}
-
-		return true;
-
+		return $identityToken === $this->share->getSharedWith();
 	}
 
 	/**
 	 * Generates a password for the share, respecting any password policy defined
 	 */
-	protected function generatePassword() {
+	protected function generatePassword(): void {
 		$event = new \OCP\Security\Events\GenerateSecurePasswordEvent();
 		$this->eventDispatcher->dispatchTyped($event);
 		$password = $event->getPassword() ?? $this->secureRandom->generate(20);
 
 		$this->share->setPassword($password);
 		$this->shareManager->updateShare($this->share);
-		return;
 	}
 
 	protected function verifyPassword(string $password): bool {

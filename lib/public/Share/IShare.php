@@ -451,16 +451,16 @@ interface IShare {
 	/**
 	 * Set the password's expiration time of this share.
 	 *
-	 * @return \OCP\Share\IShare The modified object
+	 * @return self The modified object
+	 * @since 24.0.0
 	 */
-	public function setPasswordExpirationTime($passwordExpirationTime = null);
+	public function setPasswordExpirationTime(?\DateTimeInterface $passwordExpirationTime = null): IShare;
 
 	/**
 	 * Get the password's expiration time of this share.
-	 *
-	 * @return string
+	 * @since 24.0.0
 	 */
-	public function getPasswordExpirationTime();
+	public function getPasswordExpirationTime(): ?\DateTimeInterface;
 
 	/**
 	 * Set if the recipient can start a conversation with the owner to get the

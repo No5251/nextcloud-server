@@ -76,8 +76,7 @@ use OCP\Share\IShareProvider;
  */
 class ShareByMailProvider implements IShareProvider {
 
-	/** @var IConfig */
-	private $config;
+	private IConfig $config;
 
 	/** @var  IDBConnection */
 	private $dbConnection;
@@ -684,23 +683,24 @@ class ShareByMailProvider implements IShareProvider {
 	}
 
 	/**
-	 * add share to the database and return the ID
-	 *
-	 * @param int $itemSource
-	 * @param string $itemType
-	 * @param string $shareWith
-	 * @param string $sharedBy
-	 * @param string $uidOwner
-	 * @param int $permissions
-	 * @param string $token
-	 * @param string $password
-	 * @param bool $sendPasswordByTalk
-	 * @param bool $hideDownload
-	 * @param string $label
-	 * @param \DateTime|null $expirationTime
-	 * @return int
+	 * Add share to the database and return the ID
 	 */
-	protected function addShareToDB($itemSource, $itemType, $shareWith, $sharedBy, $uidOwner, $permissions, $token, $password, $passwordExpirationTime, $sendPasswordByTalk, $hideDownload, $label, $expirationTime, $note = ''): int {
+	protected function addShareToDB(
+		?int $itemSource,
+		?string $itemType,
+		?string $shareWith,
+		?string $sharedBy,
+		?string $uidOwner,
+		?int $permissions,
+		?string $token,
+		?string $password,
+		?\DateTimeInterface $passwordExpirationTime,
+		?bool $sendPasswordByTalk,
+		?bool $hideDownload,
+		?string $label,
+		?\DateTimeInterface $expirationTime,
+		?string $note = ''
+	): int {
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->insert('share')
 			->setValue('share_type', $qb->createNamedParameter(IShare::TYPE_EMAIL))
@@ -1026,7 +1026,8 @@ class ShareByMailProvider implements IShareProvider {
 		$share->setShareTime($shareTime);
 		$share->setSharedWith($data['share_with']);
 		$share->setPassword($data['password']);
-		$share->setPasswordExpirationTime($data['password_expiration_time']);
+		$passwordExpirationTime = \DateTime::createFromFormat('Y-m-d H:i:s', $data['password_expiration_time']);
+		$share->setPasswordExpirationTime($passwordExpirationTime !== false? $passwordExpirationTime : null);
 		$share->setLabel($data['label']);
 		$share->setSendPasswordByTalk((bool)$data['password_by_talk']);
 		$share->setHideDownload((bool)$data['hide_download']);

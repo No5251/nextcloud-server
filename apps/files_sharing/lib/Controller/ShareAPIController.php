@@ -1523,30 +1523,27 @@ class ShareAPIController extends OCSController {
 
 	/**
 	 * Set the share's password expiration time
-	 *
-	 * @param IShare $share
-	 *
 	 */
-	private function setSharePasswordExpirationTime($share) {
+	private function setSharePasswordExpirationTime(IShare $share): void {
 		if ($this->config->getSystemValue('allow_mail_share_permanent_password')) {
 			// Sets password expiration date to NULL
 			$share->setPasswordExpirationTime();
-		} else {
-			// Sets password expiration date
-			$expirationTime = null;
-			try {
-				$now = new \DateTime();
-				$expirationInterval = $this->config->getSystemValue('share_temporary_password_expiration_interval');
-				if ($expirationInterval === '' || is_null($expirationInterval)) {
-					$expirationInterval = 'P0DT15M';
-				}
-				$expirationTime = $now->add(new \DateInterval($expirationInterval));
-			} catch (\Exception $e) {
-				// Catches invalid format for system value 'share_temporary_password_expiration_interval'
-				$expirationTime = $now->add(new \DateInterval('P0DT15M'));
-			} finally {
-				$share->setPasswordExpirationTime($expirationTime);
+			return;
+		}
+		// Sets password expiration date
+		$expirationTime = null;
+		try {
+			$now = new \DateTime();
+			$expirationInterval = $this->config->getSystemValue('share_temporary_password_expiration_interval');
+			if ($expirationInterval === '' || is_null($expirationInterval)) {
+				$expirationInterval = 'P0DT15M';
 			}
+			$expirationTime = $now->add(new \DateInterval($expirationInterval));
+		} catch (\Exception $e) {
+			// Catches invalid format for system value 'share_temporary_password_expiration_interval'
+			$expirationTime = $now->add(new \DateInterval('P0DT15M'));
+		} finally {
+			$share->setPasswordExpirationTime($expirationTime);
 		}
 	}
 
