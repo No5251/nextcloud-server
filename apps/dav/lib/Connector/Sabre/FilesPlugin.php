@@ -449,6 +449,7 @@ class FilesPlugin extends ServerPlugin {
 					$sizeMetadata = $node->getMetadata('size');
 				} else {
 					// TODO fetch metadata manually in that case
+					// or is that always the case?
 				}
 
 				return json_encode($sizeMetadata->getMetadata());
