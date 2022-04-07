@@ -36,6 +36,7 @@
 namespace OC\Files\Cache;
 
 use Doctrine\DBAL\Exception;
+use OC\Files\FileInfo;
 use OC\Files\Storage\Wrapper\Jail;
 use OC\Hooks\BasicEmitter;
 use OC\Metadata\IMetadataManager;
@@ -44,6 +45,7 @@ use OCP\Files\Cache\IScanner;
 use OCP\Files\ForbiddenException;
 use OCP\Files\Storage\IReliableEtagStorage;
 use OCP\Files\ForbiddenException as ForbiddenExceptionAlias;
+use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\Files\Storage\ILockingStorage;
 use OCP\Files\Storage\IStorage;
@@ -84,6 +86,7 @@ class Scanner extends BasicEmitter implements IScanner {
 	protected ?ILockingProvider $lockingProvider = null;
 	protected ?IMetadataManager $metadataManager = null;
 	protected ?IEventDispatcher $eventDispatcher = null;
+	protected ?IRootFolder $root = null;
 
 	public function __construct(\OC\Files\Storage\Storage $storage) {
 		$this->storage = $storage;
@@ -93,6 +96,7 @@ class Scanner extends BasicEmitter implements IScanner {
 		$this->lockingProvider = \OC::$server->get(ILockingProvider::class);
 		$this->metadataManager = \OC::$server->get(IMetadataManager::class);
 		$this->eventDispatcher = \OC::$server->get(IEventDispatcher::class);
+		$this->root = \OC::$server->get(IRootFolder::class);
 	}
 
 	/**
@@ -150,10 +154,7 @@ class Scanner extends BasicEmitter implements IScanner {
 			$data = $data ?? $this->getData($file);
 
 			if (!$data) {
-				$node = $this->getNodeForPath($file);
-				$this->eventDispatcher->dispatchTyped(new BeforeNodeDeletedEvent($node));
 				$this->removeFromCache($file);
-				$this->eventDispatcher->dispatchTyped(new NodeDeletedEvent($node));
 				return null;
 			}
 
@@ -252,11 +253,15 @@ class Scanner extends BasicEmitter implements IScanner {
 	}
 
 	protected function removeFromCache($path) {
+		$node = $this->getNodeForPath($path);
+		echo 'ree';
+		$this->eventDispatcher->dispatchTyped(new BeforeNodeDeletedEvent($node));
 		\OC_Hook::emit('Scanner', 'removeFromCache', ['file' => $path]);
 		$this->emit('\OC\Files\Cache\Scanner', 'removeFromCache', [$path]);
 		if ($this->cacheActive) {
 			$this->cache->remove($path);
 		}
+		$this->eventDispatcher->dispatchTyped(new NodeDeletedEvent($node));
 	}
 
 	/**
