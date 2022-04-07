@@ -74,8 +74,7 @@ class FileMetadataMapper extends QBMapper {
 
 	public function clear(int $fileId): void {
 		$qb = $this->db->getQueryBuilder();
-		$qb->delete()
-			->from($this->getTableName())
+		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)));
 
 		$qb->executeStatement();

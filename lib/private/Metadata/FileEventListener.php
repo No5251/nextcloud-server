@@ -17,8 +17,11 @@ class FileEventListener implements IEventListener {
 		if ($node->getMimetype() === 'httpd/unix-directory') {
 			return false;
 		}
-		$path = $node->getPath();
+		if ($node->getSize(false) <= 0) {
+			return false;
+		}
 
+		$path = $node->getPath();
 		// TODO make this more dynamic, we have the same issue in other places
 		return !str_starts_with($path, 'appdata_') && !str_starts_with($path, 'files_versions/') && !str_starts_with($path, 'files_trashbin/');
 	}
@@ -36,7 +39,7 @@ class FileEventListener implements IEventListener {
 			}
 		}
 
-		if ($event instanceof NodeCreatedEvent || $event instanceof NodeWrittenEvent) {
+		if ($event instanceof NodeWrittenEvent) {
 			$node = $event->getNode();
 			if ($this->shouldExtractMetadata($node)) {
 				/** @var File $node */

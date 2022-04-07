@@ -44,14 +44,23 @@ use OCP\Files\Cache\IScanner;
 use OCP\Files\ForbiddenException;
 use OCP\Files\Storage\IReliableEtagStorage;
 use OCP\Files\ForbiddenException as ForbiddenExceptionAlias;
+use OCP\Files\Node;
 use OCP\Files\Storage\ILockingStorage;
 use OCP\Files\Storage\IStorage;
 use OCP\Files\StorageInvalidException;
 use OCP\Files\StorageNotAvailableException;
+use OCP\Files\Events\Node\BeforeNodeDeletedEvent;
+use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\IConfig;
 use OCP\ILogger;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
+use OCP\EventDispatcher\IEventDispatcher;
+use OC\Files\Filesystem;
+use OC\Files\Node\File;
+use OC\Files\Node\Folder;
+use OC\Files\Node\NonExistingFile;
+use OC\Files\Node\NonExistingFolder;
 
 /**
  * Class Scanner
@@ -74,6 +83,7 @@ class Scanner extends BasicEmitter implements IScanner {
 	protected bool $useTransactions = true;
 	protected ?ILockingProvider $lockingProvider = null;
 	protected ?IMetadataManager $metadataManager = null;
+	protected ?IEventDispatcher $eventDispatcher = null;
 
 	public function __construct(\OC\Files\Storage\Storage $storage) {
 		$this->storage = $storage;
@@ -82,6 +92,7 @@ class Scanner extends BasicEmitter implements IScanner {
 		$this->cacheActive = !\OC::$server->get(IConfig::class)->getSystemValue('filesystem_cache_readonly', false);
 		$this->lockingProvider = \OC::$server->get(ILockingProvider::class);
 		$this->metadataManager = \OC::$server->get(IMetadataManager::class);
+		$this->eventDispatcher = \OC::$server->get(IEventDispatcher::class);
 	}
 
 	/**
@@ -139,7 +150,10 @@ class Scanner extends BasicEmitter implements IScanner {
 			$data = $data ?? $this->getData($file);
 
 			if (!$data) {
+				$node = $this->getNodeForPath($file);
+				$this->eventDispatcher->dispatchTyped(new BeforeNodeDeletedEvent($node));
 				$this->removeFromCache($file);
+				$this->eventDispatcher->dispatchTyped(new NodeDeletedEvent($node));
 				return null;
 			}
 
@@ -518,5 +532,27 @@ class Scanner extends BasicEmitter implements IScanner {
 	 */
 	public function setCacheActive(bool $active): void {
 		$this->cacheActive = $active;
+	}
+
+	private function getNodeForPath(string $path): Node {
+		$info = Filesystem::getView()->getFileInfo($path);
+		if (!$info) {
+				$fullPath = Filesystem::getView()->getAbsolutePath($path);
+				if (isset($this->deleteMetaCache[$fullPath])) {
+						$info = $this->deleteMetaCache[$fullPath];
+				} else {
+						$info = null;
+				}
+				if (Filesystem::is_dir($path)) {
+						return new NonExistingFolder($this->root, $this->view, $fullPath, $info);
+				} else {
+						return new NonExistingFile($this->root, $this->view, $fullPath, $info);
+				}
+		}
+		if ($info->getType() === FileInfo::TYPE_FILE) {
+				return new File($this->root, $this->view, $info->getPath(), $info);
+		} else {
+				return new Folder($this->root, $this->view, $info->getPath(), $info);
+		}
 	}
 }
