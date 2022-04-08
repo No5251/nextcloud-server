@@ -39,6 +39,7 @@ use OCP\Defaults;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\ILogger;
@@ -62,6 +63,9 @@ use Test\TestCase;
  * @group DB
  */
 class ShareByMailProviderTest extends TestCase {
+
+	/** @var IConfig */
+	private $config;
 
 	/** @var  IDBConnection */
 	private $connection;
@@ -111,6 +115,7 @@ class ShareByMailProviderTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
+		$this->config = $this->getMockBuilder(IConfig::class)->getMock();
 		$this->connection = \OC::$server->getDatabaseConnection();
 
 		$this->l = $this->getMockBuilder(IL10N::class)->getMock();
@@ -145,6 +150,7 @@ class ShareByMailProviderTest extends TestCase {
 		$instance = $this->getMockBuilder('OCA\ShareByMail\ShareByMailProvider')
 			->setConstructorArgs(
 				[
+					$this->config,
 					$this->connection,
 					$this->secureRandom,
 					$this->userManager,
@@ -168,6 +174,7 @@ class ShareByMailProviderTest extends TestCase {
 		}
 
 		return new ShareByMailProvider(
+			$this->config,
 			$this->connection,
 			$this->secureRandom,
 			$this->userManager,
@@ -531,6 +538,7 @@ class ShareByMailProviderTest extends TestCase {
 		$hideDownload = true;
 		$label = 'label';
 		$expiration = new \DateTime();
+		$passwordExpirationTime = new \DateTime();
 
 
 		$instance = $this->getInstance();
@@ -546,6 +554,7 @@ class ShareByMailProviderTest extends TestCase {
 				$permissions,
 				$token,
 				$password,
+				$passwordExpirationTime,
 				$sendPasswordByTalk,
 				$hideDownload,
 				$label,
@@ -572,6 +581,7 @@ class ShareByMailProviderTest extends TestCase {
 		$this->assertSame($permissions, (int)$result[0]['permissions']);
 		$this->assertSame($token, $result[0]['token']);
 		$this->assertSame($password, $result[0]['password']);
+		$this->assertSame($passwordExpirationTime->getTimestamp(), \DateTime::createFromFormat('Y-m-d H:i:s', $result[0]['password_expiration_time'])->getTimestamp());
 		$this->assertSame($sendPasswordByTalk, (bool)$result[0]['password_by_talk']);
 		$this->assertSame($hideDownload, (bool)$result[0]['hide_download']);
 		$this->assertSame($label, $result[0]['label']);
