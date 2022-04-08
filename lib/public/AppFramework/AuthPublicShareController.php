@@ -100,7 +100,7 @@ abstract class AuthPublicShareController extends PublicShareController {
 	 */
 	protected function validateIdentity(?string $identityToken = null): bool {
 		return false;
-	};
+	}
 
 	/**
 	 * Generates a password
@@ -108,7 +108,7 @@ abstract class AuthPublicShareController extends PublicShareController {
 	 * @since 24.0.0
 	 */
 	protected function generatePassword(): void {
-	};
+	}
 
 	/**
 	 * Verify the password
