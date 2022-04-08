@@ -82,7 +82,7 @@ class File extends Node implements IFile {
 	protected IL10N $l10n;
 
 	/** @var array<string, FileMetadata> */
-	private array $metadata;
+	private array $metadata = [];
 
 	/**
 	 * Sets up the node, expects a full path name

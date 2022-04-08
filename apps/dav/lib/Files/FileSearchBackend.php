@@ -30,8 +30,10 @@ use OC\Files\Search\SearchComparison;
 use OC\Files\Search\SearchOrder;
 use OC\Files\Search\SearchQuery;
 use OC\Files\View;
+use OC\Metadata\IMetadataManager;
 use OCA\DAV\Connector\Sabre\CachingTree;
 use OCA\DAV\Connector\Sabre\Directory;
+use OCA\DAV\Connector\Sabre\File;
 use OCA\DAV\Connector\Sabre\FilesPlugin;
 use OCA\DAV\Connector\Sabre\TagsPlugin;
 use OCP\Files\Cache\ICacheEntry;
@@ -44,6 +46,7 @@ use OCP\Files\Search\ISearchQuery;
 use OCP\IUser;
 use OCP\Share\IManager;
 use Sabre\DAV\Exception\NotFound;
+use Sabre\DAV\INode;
 use SearchDAV\Backend\ISearchBackend;
 use SearchDAV\Backend\SearchPropertyDefinition;
 use SearchDAV\Backend\SearchResult;
@@ -135,6 +138,32 @@ class FileSearchBackend implements ISearchBackend {
 			new SearchPropertyDefinition(FilesPlugin::FILE_METADATA_SIZE, false, true, false, SearchPropertyDefinition::DATATYPE_STRING),
 			new SearchPropertyDefinition(FilesPlugin::FILEID_PROPERTYNAME, false, true, false, SearchPropertyDefinition::DATATYPE_NONNEGATIVE_INTEGER),
 		];
+	}
+
+	/**
+	 * @param INode[] $nodes
+	 * @param string[] $requestProperties
+	 */
+	public function preloadPropertyFor(array $nodes, array $requestProperties): void {
+		if (in_array(FilesPlugin::FILE_METADATA_SIZE, $requestProperties, true)) {
+			// Preloading of the metadata
+			$fileIds = [];
+			foreach ($nodes as $node) {
+				if (str_starts_with($node->getFileInfo()->getMimeType(), 'image')) {
+					/** @var File $node */
+					$fileIds[] = $node->getFileInfo()->getId();
+				}
+			}
+			/** @var IMetaDataManager $metadataManager */
+			$metadataManager = \OC::$server->get(IMetadataManager::class);
+			$preloadedMetadata = $metadataManager->fetchMetadataFor('size', $fileIds);
+			foreach ($nodes as $node) {
+				if (str_starts_with($node->getFileInfo()->getMimeType(), 'image')) {
+					/** @var File $child */
+					$node->setMetadata('size', $preloadedMetadata[$node->getFileInfo()->getId()]);
+				}
+			}
+		}
 	}
 
 	/**
@@ -254,8 +283,6 @@ class FileSearchBackend implements ISearchBackend {
 				return $node->getSize();
 			case FilesPlugin::INTERNAL_FILEID_PROPERTYNAME:
 				return $node->getInternalFileId();
-			case FilesPlugin::FILE_METADATA_SIZE:
-				return $node->getMetadata('size');
 			default:
 				return null;
 		}

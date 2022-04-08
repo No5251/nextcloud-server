@@ -22,6 +22,7 @@
  */
 namespace OCA\DAV\Files;
 
+use Sabre\DAV\INode;
 use SearchDAV\Backend\ISearchBackend;
 use SearchDAV\Query\Query;
 
@@ -64,6 +65,12 @@ class LazySearchBackend implements ISearchBackend {
 			return $this->backend->search($query);
 		} else {
 			return [];
+		}
+	}
+
+	public function preloadPropertyFor(array $nodes, array $requestProperties): void {
+		if ($this->backend) {
+			$this->backend->preloadPropertyFor($nodes, $requestProperties);
 		}
 	}
 }

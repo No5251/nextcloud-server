@@ -42,6 +42,7 @@ use OCP\IConfig;
 use OCP\IPreview;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\IFile;
@@ -448,8 +449,14 @@ class FilesPlugin extends ServerPlugin {
 				if ($node->hasMetadata('size')) {
 					$sizeMetadata = $node->getMetadata('size');
 				} else {
-					// TODO fetch metadata manually in that case
-					// or is that always the case?
+					// This code path should not be called since we try to preload
+					// the metadata when loading the folder or the search results
+					// in one go
+					$metadataManager = \OC::$server->get(IMetadataManager::class);
+					$sizeMetadata = $metadataManager->fetchMetadataFor('size', [$node->getId()])[$node->getId()];
+
+					// TODO would be nice to display this in the profiler...
+					\OC::$server->get(LoggerInterface::class)->warning('Inefficient fetching of metadata');
 				}
 
 				return json_encode($sizeMetadata->getMetadata());
