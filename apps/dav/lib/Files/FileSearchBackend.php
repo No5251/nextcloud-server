@@ -132,6 +132,7 @@ class FileSearchBackend implements ISearchBackend {
 			new SearchPropertyDefinition(FilesPlugin::OWNER_DISPLAY_NAME_PROPERTYNAME, false, true, false),
 			new SearchPropertyDefinition(FilesPlugin::DATA_FINGERPRINT_PROPERTYNAME, false, true, false),
 			new SearchPropertyDefinition(FilesPlugin::HAS_PREVIEW_PROPERTYNAME, false, true, false, SearchPropertyDefinition::DATATYPE_BOOLEAN),
+			new SearchPropertyDefinition(FilesPlugin::FILE_METADATA_SIZE, false, true, false, SearchPropertyDefinition::DATATYPE_STRING),
 			new SearchPropertyDefinition(FilesPlugin::FILEID_PROPERTYNAME, false, true, false, SearchPropertyDefinition::DATATYPE_NONNEGATIVE_INTEGER),
 		];
 	}
@@ -253,6 +254,8 @@ class FileSearchBackend implements ISearchBackend {
 				return $node->getSize();
 			case FilesPlugin::INTERNAL_FILEID_PROPERTYNAME:
 				return $node->getInternalFileId();
+			case FilesPlugin::FILE_METADATA_SIZE:
+				return $node->getMetadata('size');
 			default:
 				return null;
 		}

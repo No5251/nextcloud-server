@@ -45,18 +45,22 @@ class MetaDataManager implements IMetadataManager {
 		}
 	}
 
-	public function generateMetadata(File $file, array $existingMetadataGroups = []): void {
+	public function generateMetadata(File $file, bool $checkExisting = false): void {
+		$existingMetadataGroups = [];
+
+		if ($checkExisting) {
+			$existingMetadata = $this->fileMetadataMapper->findForFile($file->getId());
+			foreach ($existingMetadata as $metadata) {
+				$existingMetadataGroups[] = $metadata->getGroupName();
+			}
+		}
+
 		foreach ($this->providers as $supportedMimetype => $provider) {
 			if (preg_match($supportedMimetype, $file->getMimeType())) {
 				if (count(array_diff($provider::groupsProvided(), $existingMetadataGroups)) > 0) {
 					$metaDataGroup = $provider->execute($file);
 					foreach ($metaDataGroup as $group => $metadata) {
-						/** @var MetadataGroup $metadata */
-						$fileMetadata = new FileMetadata();
-						$fileMetadata->setId($file->getId());
-						$fileMetadata->setGroupName($group);
-						$fileMetadata->setMetadata($metadata->getMetadata());
-						$this->fileMetadataMapper->insertOrUpdate($fileMetadata);
+						$this->fileMetadataMapper->insertOrUpdate($metadata);
 					}
 				}
 			}

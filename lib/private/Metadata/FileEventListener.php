@@ -43,7 +43,7 @@ class FileEventListener implements IEventListener {
 			$node = $event->getNode();
 			if ($this->shouldExtractMetadata($node)) {
 				/** @var File $node */
-				$this->manager->generateMetadata($event->getNode());
+				$this->manager->generateMetadata($event->getNode(), false);
 			}
 		}
 	}

@@ -45,7 +45,7 @@ interface IMetadataProvider {
 	 * shouldn't be longer than 4000 characters.
 	 *
 	 * @param File $file The file to extract the metadata from
-	 * @param array<string, MetadataGroup> An array containing all the metadata fetched.
+	 * @param array<string, FileMetadata> An array containing all the metadata fetched.
 	 */
 	public function execute(File $file): array;
 }

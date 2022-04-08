@@ -2,10 +2,9 @@
 
 namespace OC\Metadata\Provider;
 
+use OC\Metadata\FileMetadata;
 use OC\Metadata\IMetadataProvider;
-use OC\Metadata\MetadataGroup;
 use OCP\Files\File;
-use OCP\Files\Storage\IStorage;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
@@ -50,10 +49,21 @@ class ExifProvider implements IMetadataProvider {
 	public function execute(File $file): array {
 		$fileDescriptor = $file->fopen('rb');
 		$data = exif_read_data($fileDescriptor, 'ANY_TAG', true);
+
+		$size = new FileMetadata();
+		$size->setGroupName('size');
+		$size->setId($file->getId());
+		$size->setMetadata([]);
+
+		$gps = new FileMetadata();
+		$gps->setGroupName('gps');
+		$gps->setId($file->getId());
+		$gps->setMetadata([]);
+
 		if (!$data) {
 			return [
-				'size' => new MetadataGroup('size', []),
-				'gps' => new MetadataGroup('gps', []),
+				'size' => $size,
+				'gps' => $gps
 			];
 		}
 
@@ -61,23 +71,19 @@ class ExifProvider implements IMetadataProvider {
 			&& array_key_exists('Width', $data['COMPUTED'])
 			&& array_key_exists('Height', $data['COMPUTED'])
 		) {
-			$size = new MetadataGroup('size', [
+			$size->setMetadata([
 				'width' => $data['COMPUTED']['Width'],
 				'height' => $data['COMPUTED']['Height'],
 			]);
-		} else {
-			$size = new MetadataGroup('size', []);
 		}
 
 		if (array_key_exists('GPS', $data)) {
-			$gps = new MetadataGroup('gps', [
+			$gps->setMetadata([
 				'longitude' => $this->getGps($data['GPS']['GPSLongitude'],
 					$data['GPS']['GPSLongitudeRef']),
 				'latitude' => $this->getGps($data['GPS']['GPSLatitude'],
-					$data['GPS']['GPSLatitudeRef'])
+					$data['GPS']['GPSLatitudeRef']),
 			]);
-		} else {
-			$gps = new MetadataGroup('gps', []);
 		}
 
 		return [

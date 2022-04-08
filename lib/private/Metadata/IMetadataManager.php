@@ -10,7 +10,7 @@ interface IMetadataManager {
 	 */
 	public function registerProvider(string $className): void;
 
-	public function generateMetadata(File $node, array $existingMetadataGroups = []): void;
+	public function generateMetadata(File $node, bool $checkExisting): void;
 
 	public function clearMetadata(int $fileId): void;
 
