@@ -16,4 +16,6 @@ interface IMetadataManager {
 
 	/** @return array<int, FileMetadata> */
 	public function fetchMetadataFor(string $group, array $fileIds): array;
+
+	public function getCapabilities(): array;
 }

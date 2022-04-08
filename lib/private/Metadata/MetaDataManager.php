@@ -74,4 +74,12 @@ class MetaDataManager implements IMetadataManager {
 	public function fetchMetadataFor(string $group, array $fileIds): array {
 		return $this->fileMetadataMapper->findForGroupForFiles($fileIds, $group);
 	}
+
+	public function getCapabilities(): array {
+		$capabilities = [];
+		foreach ($this->providers as $supportedMimetype => $provider) {
+			$capabilities[$supportedMimetype] = $provider::groupsProvided();
+		}
+		return $capabilities;
+	}
 }

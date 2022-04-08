@@ -121,6 +121,7 @@ use OC\Log\PsrLoggerAdapter;
 use OC\Mail\Mailer;
 use OC\Memcache\ArrayCache;
 use OC\Memcache\Factory;
+use OC\Metadata\Capabilities as MetadataCapabilities;
 use OC\Metadata\IMetadataManager;
 use OC\Metadata\MetaDataManager;
 use OC\Notification\Manager;
@@ -1154,6 +1155,9 @@ class Server extends ServerContainer implements IServerContainer {
 			});
 			$manager->registerCapability(function () use ($c) {
 				return $c->get(\OC\Security\Bruteforce\Capabilities::class);
+			});
+			$manager->registerCapability(function () use ($c) {
+				return $c->get(MetadataCapabilities::class);
 			});
 			return $manager;
 		});
