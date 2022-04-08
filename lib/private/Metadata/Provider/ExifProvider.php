@@ -48,7 +48,7 @@ class ExifProvider implements IMetadataProvider {
 
 	public function execute(File $file): array {
 		$fileDescriptor = $file->fopen('rb');
-		$data = exif_read_data($fileDescriptor, 'ANY_TAG', true);
+		$data = @exif_read_data($fileDescriptor, 'ANY_TAG', true);
 
 		$size = new FileMetadata();
 		$size->setGroupName('size');

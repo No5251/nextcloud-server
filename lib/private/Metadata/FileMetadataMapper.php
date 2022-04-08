@@ -50,15 +50,19 @@ class FileMetadataMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->in('id', $qb->createNamedParameter($fileIds,IQueryBuilder::PARAM_INT_ARRAY)))
+			->where($qb->expr()->in('id', $qb->createParameter('fileIds')))
 			->andWhere($qb->expr()->eq('group_name', $qb->createNamedParameter($groupName, IQueryBuilder::PARAM_STR)));
 
-		/** @var FileMetadata[] $rawEntities */
-		$rawEntities = $this->findEntities($qb);
-		$metadata = [];
-		foreach ($rawEntities as $entity) {
-			$metadata[$entity->getId()] = $entity;
+		foreach (array_chunk($fileIds) as $fileIdsChunk) {
+			$qb->setParameter('fileIds', $fileIdsChunk, IQueryBuilder::PARAM_INT_ARRAY);
+			/** @var FileMetadata[] $rawEntities */
+			$rawEntities = $this->findEntities($qb);
+			$metadata = [];
+			foreach ($rawEntities as $entity) {
+				$metadata[$entity->getId()] = $entity;
+			}
 		}
+
 		foreach ($fileIds as $id) {
 			if (isset($metadata[$id])) {
 				continue;

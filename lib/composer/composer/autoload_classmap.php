@@ -1301,7 +1301,7 @@ return array(
     'OC\\Metadata\\FileMetadataMapper' => $baseDir . '/lib/private/Metadata/FileMetadataMapper.php',
     'OC\\Metadata\\IMetadataManager' => $baseDir . '/lib/private/Metadata/IMetadataManager.php',
     'OC\\Metadata\\IMetadataProvider' => $baseDir . '/lib/private/Metadata/IMetadataProvider.php',
-    'OC\\Metadata\\MetaDataManager' => $baseDir . '/lib/private/Metadata/MetaDataManager.php',
+    'OC\\Metadata\\MetadataManager' => $baseDir . '/lib/private/Metadata/MetadataManager.php',
     'OC\\Metadata\\Provider\\ExifProvider' => $baseDir . '/lib/private/Metadata/Provider/ExifProvider.php',
     'OC\\Migration\\BackgroundRepair' => $baseDir . '/lib/private/Migration/BackgroundRepair.php',
     'OC\\Migration\\ConsoleOutput' => $baseDir . '/lib/private/Migration/ConsoleOutput.php',

@@ -8,7 +8,7 @@ use OCP\Files\Storage\IStorage;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
-class MetaDataManager implements IMetadataManager {
+class MetadataManager implements IMetadataManager {
 	/** @var array<string, IMetadataProvider> */
 	private array $providers;
 	private array $providerClasses;

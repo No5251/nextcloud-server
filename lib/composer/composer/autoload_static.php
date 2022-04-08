@@ -1330,7 +1330,7 @@ class ComposerStaticInit53792487c5a8370acc0b06b1a864ff4c
         'OC\\Metadata\\FileMetadataMapper' => __DIR__ . '/../../..' . '/lib/private/Metadata/FileMetadataMapper.php',
         'OC\\Metadata\\IMetadataManager' => __DIR__ . '/../../..' . '/lib/private/Metadata/IMetadataManager.php',
         'OC\\Metadata\\IMetadataProvider' => __DIR__ . '/../../..' . '/lib/private/Metadata/IMetadataProvider.php',
-        'OC\\Metadata\\MetaDataManager' => __DIR__ . '/../../..' . '/lib/private/Metadata/MetaDataManager.php',
+        'OC\\Metadata\\MetadataManager' => __DIR__ . '/../../..' . '/lib/private/Metadata/MetadataManager.php',
         'OC\\Metadata\\Provider\\ExifProvider' => __DIR__ . '/../../..' . '/lib/private/Metadata/Provider/ExifProvider.php',
         'OC\\Migration\\BackgroundRepair' => __DIR__ . '/../../..' . '/lib/private/Migration/BackgroundRepair.php',
         'OC\\Migration\\ConsoleOutput' => __DIR__ . '/../../..' . '/lib/private/Migration/ConsoleOutput.php',

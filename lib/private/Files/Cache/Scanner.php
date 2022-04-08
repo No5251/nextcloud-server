@@ -254,7 +254,6 @@ class Scanner extends BasicEmitter implements IScanner {
 
 	protected function removeFromCache($path) {
 		$node = $this->getNodeForPath($path);
-		echo 'ree';
 		$this->eventDispatcher->dispatchTyped(new BeforeNodeDeletedEvent($node));
 		\OC_Hook::emit('Scanner', 'removeFromCache', ['file' => $path]);
 		$this->emit('\OC\Files\Cache\Scanner', 'removeFromCache', [$path]);
